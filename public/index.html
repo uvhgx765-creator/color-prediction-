@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Game</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #0f172a; color: white; display: flex; justify-content: center; padding: 20px; }
+        .card { width: 100%; max-width: 400px; background: #1e293b; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .header { background: #3b82f6; padding: 20px; text-align: center; }
+        .bal { font-size: 24px; color: #fbbf24; font-weight: bold; }
+        .bar { display: flex; justify-content: space-between; padding: 10px 20px; background: #334155; font-size: 14px; }
+        .pad { padding: 20px; text-align: center; }
+        .row { display: flex; gap: 10px; margin: 15px 0; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; }
+        .g { background: #10b981; } .v { background: #a855f7; } .r { background: #ef4444; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+        .n { background: #475569; color: white; padding: 10px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .hist { padding: 20px; background: #111827; }
+        .tbl { width: 100%; border-collapse: collapse; text-align: center; font-size: 14px; }
+        .tbl th, .tbl td { padding: 8px; border-bottom: 1px solid #334155; }
+        .toast { padding: 10px; margin: 10px; border-radius: 6px; display: none; text-align: center; font-weight: bold; background: #065f46; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="header"><h3>Trading Console</h3><div class="bal">₹<span id="b">0</span></div></div>
+    <div class="bar"><div>Period: <span id="p">-</span></div><div id="t" style="color:#f43f5e">00:00</div></div>
+    <div id="msg" class="toast"></div>
+    <div class="pad">
+        <div class="row">
+            <button class="btn g" onclick="bet('color','Green')">Green</button>
+            <button class="btn v" onclick="bet('color','Violet')">Violet</button>
+            <button class="btn r" onclick="bet('color','Red')">Red</button>
+        </div>
+        <div class="grid"><script>for(let i=0;i<=9;i++) document.write(`<button class="n" onclick="bet('number','${i}')">${i}</button>`);</script></div>
+    </div>
+    <div class="hist">
+        <table class="tbl">
+            <thead><tr><th>Period</th><th>Num</th><th>Color</th></tr></thead>
+            <tbody id="logs"></tbody>
+        </table>
+    </div>
+</div>
+<script>
+    async function sync() {
+        const res = await fetch('/api/game-state');
+        const d = await res.json();
+        document.getElementById('b').innerText = d.wallet.toFixed(2);
+        document.getElementById('p').innerText = d.currentPeriod;
+        document.getElementById('t').innerText = `00:${d.secondsLeft < 10 ? '0'+d.secondsLeft : d.secondsLeft}`;
+        let h = '';
+        d.history.forEach(i => {
+            let c = i.color==='Red'?'#ef4444':i.color==='Green'?'#10b981':'#a855f7';
+            h += `<tr><td>${i.period}</td><td>${i.number}</td><td style="color:${c};font-weight:bold">${i.color}</td></tr>`;
+        });
+        document.getElementById('logs').innerHTML = h;
+    }
+    async function bet(type, selection) {
+        const res = await fetch('/api/place-trade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ type, selection, amount: 100 })
+        });
+        const r = await res.json();
+        const m = document.getElementById('msg');
+        m.innerText = r.error ? r.error : `Bet placed on ${selection}!`;
+        m.style.background = r.error ? '#991b1b' : '#065f46';
+        m.style.display = 'block';
+        setTimeout(() => m.style.display = 'none', 2000);
+        sync();
+    }
+    setInterval(sync, 1000); sync();
+</script>
+</body>
+  </html>
+  
