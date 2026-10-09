@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Control</title>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; padding: 40px 20px; }
+        .box { width: 100%; max-width: 360px; background: #1e293b; padding: 25px; border-radius: 8px; border: 2px solid #ef4444; }
+        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 4px; border: none; box-sizing: border-box; }
+        input, select { background: #334155; color: white; }
+        button { background: #ef4444; color: white; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="box">
+    <h3>Admin Force Result</h3>
+    <input type="password" id="key" placeholder="Enter Secret Password">
+    <select id="num">
+        <script>for(let i=0;i<=9;i++) document.write(`<option value="${i}">Number ${i}</option>`);</script>
+    </select>
+    <button onclick="send()">Force Result</button>
+    <p id="out" style="margin-top:10px; text-align:center; font-weight:bold;"></p>
+</div>
+<script>
+    async function send() {
+        const res = await fetch('/api/admin/override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ secretKey: document.getElementById('key').value, targetNumber: document.getElementById('num').value })
+        });
+        const d = await res.json();
+        document.getElementById('out').innerText = d.error ? d.error : d.message;
+    }
+</script>
+</body>
+</html>
